@@ -80,7 +80,7 @@ struct ContentView: View {
             .padding()
             .navigationTitle("My Starter App")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Reset") {
                         resetTasks()
                     }

@@ -7,19 +7,22 @@
 
 import SwiftUI
 
-struct TaskItem: Identifiable {
-    let id = UUID()
+struct TaskItem: Identifiable, Codable, Equatable {
+    var id = UUID()
     var title: String
     var isDone: Bool
 }
 
 struct ContentView: View {
-    @State private var newTaskTitle = ""
-    @State private var tasks: [TaskItem] = [
+    private static let storageKey = "saved_tasks_v1"
+    private static let defaultTasks: [TaskItem] = [
         TaskItem(title: "Set up project icons", isDone: true),
         TaskItem(title: "Build first screen", isDone: false),
         TaskItem(title: "Run app in iOS Simulator", isDone: false)
     ]
+
+    @State private var newTaskTitle = ""
+    @State private var tasks: [TaskItem] = ContentView.loadTasks()
 
     private var completedCount: Int {
         tasks.filter(\.isDone).count
@@ -87,6 +90,9 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: tasks) { _ in
+            saveTasks()
+        }
     }
 
     private func addTask() {
@@ -101,12 +107,23 @@ struct ContentView: View {
     }
 
     private func resetTasks() {
-        tasks = [
-            TaskItem(title: "Set up project icons", isDone: true),
-            TaskItem(title: "Build first screen", isDone: false),
-            TaskItem(title: "Run app in iOS Simulator", isDone: false)
-        ]
+        tasks = ContentView.defaultTasks
         newTaskTitle = ""
+    }
+
+    private func saveTasks() {
+        guard let data = try? JSONEncoder().encode(tasks) else { return }
+        UserDefaults.standard.set(data, forKey: Self.storageKey)
+    }
+
+    private static func loadTasks() -> [TaskItem] {
+        guard
+            let data = UserDefaults.standard.data(forKey: storageKey),
+            let decoded = try? JSONDecoder().decode([TaskItem].self, from: data)
+        else {
+            return defaultTasks
+        }
+        return decoded
     }
 }
 
